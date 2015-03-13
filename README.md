@@ -27,6 +27,7 @@ Below are the subsequent steps for preparing the training samples for the TMVA:
 The training samples are now ready for the training process with tmva_training.py. Make sure to create a directory called “weights” to save the output class and xml files from the training.
 
 Evaluation Samples
+
 1) Make the trees really flat without vectors and set variables that are not defined for a given vertex category to a default value. For this, run your ntuples through createNewTree.py which will produce sets of new flat ntuples split in event range such as CombinedSVV2NoVertex\_DUSG\_0\_249999.root with the shared tree name “tree”.
 
 2) The evaluation trees can be skimmed as well to make the evaluation process faster. The script skimTT.py will reference the event ranges in the file names for the flat trees and copy new skimmed trees that contain 10% (this can easily be modified) of the events from each of the flavour/category files. The output will be one combined root file for each flavour/category such as CombinedSVV2NoVertex_DUSG.root.
