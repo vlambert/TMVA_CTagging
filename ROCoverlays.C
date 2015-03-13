@@ -66,7 +66,7 @@ void ROCoverlays() {
     cv->SetGridx();
     cv->SetGridy();
     ttbarC->SetLineColor(kBlack);
-    ttbarL->SetTitle("ttbar Discriminators");
+    ttbarL->SetTitle("t#bar{t} Discriminators");
     ttbarL->Draw();
     ttbarC->Draw("same");
     gStyle->SetOptStat(0);
@@ -87,7 +87,7 @@ void ROCoverlays() {
     ttbarC->Draw("same");
     gStyle->SetOptStat(0);
     l = new TLegend(0.55,0.8,0.90,0.9);
-    l->AddEntry(ttbarC,"ttbar","l");
+    l->AddEntry(ttbarC,"t#bar{t}","l");
     l->AddEntry(qcdC,"QCD","l");
     l->Draw();
     cv->Update();
@@ -102,7 +102,7 @@ void ROCoverlays() {
     ttbarL->Draw("same");
     gStyle->SetOptStat(0);
     l = new TLegend(0.55,0.8,0.90,0.9);
-    l->AddEntry(ttbarL,"ttbar","l");
+    l->AddEntry(ttbarL,"t#bar{t}","l");
     l->AddEntry(qcdL,"QCD","l");
     l->Draw();
     cv->Update();
@@ -116,7 +116,7 @@ void ROCoverlays() {
     ttbarCvL->Draw();
     qcdCvL->Draw("same");
     l = new TLegend(0.15,0.8,0.40,0.9);
-    l->AddEntry(ttbarCvL,"ttbar","l");
+    l->AddEntry(ttbarCvL,"t#bar{t}","l");
     l->AddEntry(qcdCvL,"QCD","l");
     l->Draw();
     cv->SaveAs(Form("CvL_%i.png",i));

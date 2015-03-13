@@ -19,16 +19,16 @@ def processNtuple(inFileName, inDirName, outDirName,category):
   mychain = gDirectory.Get( inTreeName )
   
   # output
-  outFileName = "%s/%s_EtaPtWeightHisto.root" %(outDirName, inFileName.rsplit(".",1)[0])
+  outFileName = "%s/%s_EtaPtWeightHisto.root" %(outDirName, inFileName.replace("skimmed_20k_eachptetabin_", "").rsplit(".",1)[0])
   print "Writing to %s" %outFileName
   outFile = TFile( outFileName, 'recreate' )
 
   histo = TH2D("jets", "jets", 50, -2.5, 2.5, 40, 4.17438727, 6.95654544315); # pt starting from 15 and until 1000
   #mychain.Draw("log(jetPt+50):jetEta >> +jets", "", "Lego goff");
-  mychain.Draw("log(jetPt+50):jetEta >> +jets", "weight_norm*weight_category", "Lego goff");   #after adding normalization and category weight branches
-  histo_lin = TH2D("jets_lin", "jets_lin", 50, -2.5, 2.5, 40, 15, 1000); # pt starting from 15 and until 1000  , default nbins was 40
+  mychain.Draw("log(jetPt+50):jetEta >> +jets", "weight_norm*weight_category", "Lego goff");
+  histo_lin = TH2D("jets_lin", "jets_lin", 50, -2.5, 2.5, 25, 15, 600); # pt starting from 15 and until 1000  , default nbins was 40   500 works very well for C and DUSG   30, 15, 600
   #mychain.Draw("jetPt:jetEta >> +jets_lin", "","Lego goff")
-  mychain.Draw("jetPt:jetEta >> +jets_lin", "weight_norm*weight_category", "Lego goff")  # after adding normalization and category weight branches
+  mychain.Draw("jetPt:jetEta >> +jets_lin", "weight_norm*weight_category", "Lego goff")
 
   outFile.cd()
   histo.Write()
@@ -38,29 +38,56 @@ def processNtuple(inFileName, inDirName, outDirName,category):
 
 def combineHist(inDirName,flavour):
   weightHistName = "jets_lin"
-  print "Accessing file %s/skimmed_20k_eachptetabin_CombinedSVV2RecoVertex_%s_EtaPtWeightHisto.root"%(inDirName,flavour)
-  #RecoFileName = "%s/skimmed_20k_eachptetabin_CombinedSVV2RecoVertex_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
-  #PseudoFileName = "%s/skimmed_20k_eachptetabin_CombinedSVV2PseudoVertex_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
-  #NoVtxFileName = "%s/skimmed_20k_eachptetabin_CombinedSVV2NoVertex_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
-  RecoFileName = "%s/CombinedSVV2RecoVertex_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
-  PseudoFileName = "%s/CombinedSVV2PseudoVertex_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
-  NoVtxFileName = "%s/CombinedSVV2NoVertex_%s_EtaPtWeightHisto.root" %(inDirName, flavour) 
-  RecoFile = TFile( "%s" %( RecoFileName) )
-  PseudoFile = TFile( "%s" %( PseudoFileName) )
-  NoVtxFile = TFile( "%s" %( NoVtxFileName) )
+  print "Accessing file %s/CombinedSVRecoVertex_%s_EtaPtWeightHisto.root"%(inDirName,flavour)
+  #RecoFileName = "%s/skimmed_20k_eachptetabin_CombinedSVRecoVertex_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
+  #PseudoFileName = "%s/skimmed_20k_eachptetabin_CombinedSVPseudoVertex_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
+  #NoVtxFileName = "%s/skimmed_20k_eachptetabin_CombinedSVNoVertex_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
+  RecoNSLFileName = "%s/CombinedSVRecoVertexNoSoftLepton_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
+  PseudoNSLFileName = "%s/CombinedSVPseudoVertexNoSoftLepton_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
+  NoVtxNSLFileName = "%s/CombinedSVNoVertexNoSoftLepton_%s_EtaPtWeightHisto.root" %(inDirName, flavour) 
+  RecoSMFileName = "%s/CombinedSVRecoVertexSoftMuon_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
+  PseudoSMFileName = "%s/CombinedSVPseudoVertexSoftMuon_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
+  NoVtxSMFileName = "%s/CombinedSVNoVertexSoftMuon_%s_EtaPtWeightHisto.root" %(inDirName, flavour) 
+  RecoSEFileName = "%s/CombinedSVRecoVertexSoftElectron_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
+  PseudoSEFileName = "%s/CombinedSVPseudoVertexSoftElectron_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
+  NoVtxSEFileName = "%s/CombinedSVNoVertexSoftElectron_%s_EtaPtWeightHisto.root" %(inDirName, flavour) 
+
+  RecoNSLFile = TFile( "%s" %( RecoNSLFileName) )
+  PseudoNSLFile = TFile( "%s" %( PseudoNSLFileName) )
+  NoVtxNSLFile = TFile( "%s" %( NoVtxNSLFileName) )
+  RecoSEFile = TFile( "%s" %( RecoSEFileName) )
+  PseudoSEFile = TFile( "%s" %( PseudoSEFileName) )
+  NoVtxSEFile = TFile( "%s" %( NoVtxSEFileName) )
+  RecoSMFile = TFile( "%s" %( RecoSMFileName) )
+  PseudoSMFile = TFile( "%s" %( PseudoSMFileName) )
+  NoVtxSMFile = TFile( "%s" %( NoVtxSMFileName) )
   
-  RecoHist = RecoFile.Get(weightHistName)
-  PseudoHist = PseudoFile.Get(weightHistName)
-  NoVtxHist = NoVtxFile.Get(weightHistName)
-  #print RecoHist.ClassName()
-  RecoHist.Add(PseudoHist)
-  RecoHist.Add(NoVtxHist)
-  
-  HistoutFileName = "%s/skimmed_20k_eachptetabin_CombinedSVV2Inclusive_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
+  RecoNSLHist = RecoNSLFile.Get(weightHistName)
+  PseudoNSLHist = PseudoNSLFile.Get(weightHistName)
+  NoVtxNSLHist = NoVtxNSLFile.Get(weightHistName)
+  RecoSMHist = RecoSMFile.Get(weightHistName)
+  PseudoSMHist = PseudoSMFile.Get(weightHistName)
+  NoVtxSMHist = NoVtxSMFile.Get(weightHistName)
+  RecoSEHist = RecoSEFile.Get(weightHistName)
+  PseudoSEHist = PseudoSEFile.Get(weightHistName)
+  NoVtxSEHist = NoVtxSEFile.Get(weightHistName)
+
+  print RecoNSLHist.ClassName()
+
+  RecoNSLHist.Add(PseudoNSLHist)
+  RecoNSLHist.Add(NoVtxNSLHist)
+  RecoNSLHist.Add(PseudoSMHist)
+  RecoNSLHist.Add(PseudoSEHist)
+  RecoNSLHist.Add(NoVtxSMHist)
+  RecoNSLHist.Add(NoVtxSEHist)
+  RecoNSLHist.Add(RecoSMHist)
+  RecoNSLHist.Add(RecoSEHist)
+
+  HistoutFileName = "%s/CombinedSVInclusive_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
   print "Writing Combined Histograms to %s"%HistoutFileName
   HistoutFile = TFile( HistoutFileName, 'recreate' )
   HistoutFile.cd()
-  RecoHist.Write()
+  RecoNSLHist.Write()
   HistoutFile.Close()
 
 
@@ -71,15 +98,23 @@ def main():
   # create Pool
   p = multiprocessing.Pool(parallelProcesses)
   print "Using %i parallel processes" %parallelProcesses
-  
-  outDirName = '/scratch/vlambert/TMVA/WeightHistograms_norm'     # for individual category histograms
-  combDirName = '/scratch/vlambert/TMVA/WeightHistograms_norm'    # for combined histograms
-  inDirName = "/scratch/vlambert/TMVA/QCD_flat_skimmed_weighted/"
-  
+
+  #QCD
+  #combDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/IntermediateSL/'
+  #outDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/IntermediateSL/'
+  combDirName =  '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/WeightSL/'
+  outDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/WeightSL/'
+  inDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/inter_SL/'
+  #inDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/flat_skimmed/'
+
+  #TTBar
+  #combDirName = '/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/WeightHistograms/'
+  #outDirName = '/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/WeightHistograms/'
+  #inDirName = '/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/flat_Combined/'
   flavourCategoryDict = {}
 
   for inFileName in os.listdir(inDirName):
-    if inFileName.endswith(".root"):
+    if inFileName.endswith(".root") and inFileName.startswith("Combined"):
       # processNtuple(inFileName, inDirName, outDirName)
       # break
       category = inFileName.replace("skimmed_20k_eachptetabin_", "").split("_",1)[0]
@@ -89,7 +124,7 @@ def main():
       print key
       if key not in flavourCategoryDict:
         flavourCategoryDict[key] = []
-      flavourCategoryDict[key].append(inFileName.replace(".root", "_EtaPtWeightHisto.root"))
+      flavourCategoryDict[key].append(inFileName.replace("skimmed_20k_eachptetabin_", "").replace(".root", "_EtaPtWeightHisto.root"))
       p.apply_async(processNtuple, args = (inFileName, inDirName, outDirName, category))
 
   p.close()
@@ -134,10 +169,15 @@ def main():
 
   print  "Combining files"     
   # Combine vertex categories for histograms
+  #outDirName = '/scratch/vlambert/TMVA/WeightHistograms_tt'
+  #parallelProcesses = multiprocessing.cpu_count()
+  #p = multiprocessing.Pool(parallelProcesses)
+  #print "Using %i parallel processes" %parallelProcesses
   flavours = ["C","B","DUSG"]
   for flav in flavours:
     combineHist(combDirName, flav)  
-
+  #p.close()
+  #p.join
 
 if __name__ == "__main__":
   main()

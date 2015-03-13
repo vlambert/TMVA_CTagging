@@ -42,6 +42,7 @@ def main():
     file = open(inputfile, 'r')
     outfile = open(outputfile,'w')
     oprint = False
+    #print numlines
     for line in file:
         if (line.find("Ranking input variables (method specific)...") >=0):
             oprint = True
@@ -51,6 +52,9 @@ def main():
             newline1 = line.replace("---","",1).replace("BDTG","").strip()
             newline2 = newline1.replace(":","",1)
             outfile.write(newline2+'\n')
+            #nindex+=1
+        #if nindex == numlines:
+        #    break
     file.close()
     outfile.close()
 

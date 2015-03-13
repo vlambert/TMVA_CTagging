@@ -51,20 +51,21 @@ def getEtaPtWeight(jetEta, jetPt, h2EtaPt):
     return -1
   
 
-def processNtuple(inFileName, inDirName, histoDirName, outDirName, etaPtBins, biasDict, flavourBias, NormDict):
+def processNtuple(inFileName, inDirName, histoDirName, combhistoDirName, outDirName, etaPtBins, biasDict, flavourBias, NormDict):
   
   print "Starting to process %s" %inFileName
   
   # histogram input
   weightHistName = "jets_lin"
-  category = inFileName.replace("CombinedSVV2","").replace("skimmed_20k_eachptetabin_","").split("_",1)[0]
+  category = inFileName.replace("CombinedSV","").replace("skimmed_20k_eachptetabin_","").split("_",1)[0]
   flavour = inFileName.replace("skimmed_20k_eachptetabin_","").split("_",2)[1]
   flavour = flavour.replace(".root","")
   print "This sample is of category %s and flavour %s" %(category, flavour)
   #if inFileName.startswith("skimmed_20k_eachptetabin_"):
-  histoFileNameI = "%s/skimmed_20k_eachptetabin_CombinedSVV2Inclusive_%s_EtaPtWeightHisto.root" %(histoDirName, flavour)  #Category-inclusive pt/eta weights
-  histoFileName  = "%s/skimmed_20k_eachptetabin_CombinedSVV2%s_%s_EtaPtWeightHisto.root" %(histoDirName, category, flavour) #Category-specific pt/eta - for Category-specific training
-  print "Getting histogram %s from %s" %(weightHistName, histoFileName)
+  histoFileNameI = "%s/CombinedSVInclusive_%s_EtaPtWeightHisto.root" %(combhistoDirName, flavour)  #Category-inclusive pt/eta weights
+  histoFileName  = "%s/CombinedSV%s_%s_EtaPtWeightHisto.root" %(histoDirName, category, flavour)
+  #histoFileName  = "%s/skimmed_20k_eachptetabin_CombinedSV%s_%s_EtaPtWeightHisto.root" %(histoDirName, category, flavour) #Category-specific pt/eta - for Category-specific training
+  print "Getting histogram %s from %s" %(weightHistName, histoFileNameI)
   histoFileI = TFile.Open( histoFileNameI )
   histoFile  = TFile.Open( histoFileName )
   h2EtaPtI = histoFileI.Get(weightHistName)
@@ -86,8 +87,8 @@ def processNtuple(inFileName, inDirName, histoDirName, outDirName, etaPtBins, bi
   weight_flavour = array( "f", [ 0. ] )
   weight = array( "f", [ 0. ] )
 
-  b_weight_etaPt = myTree.Branch( "weight_etaPt", weight_etaPt, 'weight_etaPt/F' )
-  b_weight_etaPtInc = myTree.Branch( "weight_etaPtInc", weight_etaPtInc, 'weight_etaPtInc/F' )
+  b_weight_etaPt = myTree.Branch( "weight_etaPt", weight_etaPt, 'weight_etaPt/F' )   # category specific - no weights applied
+  b_weight_etaPtInc = myTree.Branch( "weight_etaPtInc", weight_etaPtInc, 'weight_etaPtInc/F' )  # inclusive - with cat + norm weights
   b_weight_category = myTree.Branch( "weight_category", weight_category, 'weight_category/F' )
   b_weight_norm = myTree.Branch( "weight_norm", weight_norm, 'weight_norm/F' )
   b_weight_flavour = myTree.Branch( "weight_flavour", weight_flavour, 'weight_flavour/F' )
@@ -143,16 +144,41 @@ def processNtuple(inFileName, inDirName, histoDirName, outDirName, etaPtBins, bi
 def main():
 
   ROOT.gROOT.SetBatch(True)
-  parallelProcesses = multiprocessing.cpu_count()
+  #parallelProcesses = multiprocessing.cpu_count()
   # create Pool
-  p = multiprocessing.Pool(parallelProcesses)
-  print "Using %i parallel processes" %parallelProcesses
+  #p = multiprocessing.Pool(parallelProcesses)
+  #print "Using %i parallel processes" %parallelProcesses
     
-  outDirName = '/scratch/vlambert/TMVA/QCD_flat_skimmed_ttweighted'
-  histoDirName = '/scratch/vlambert/TMVA/WeightHistograms_norm'
-  inDirName = "/scratch/vlambert/TMVA/QCD_flat_skimmed_combined"
-  biasFileName = "ttbarBias.txt"    # contains category biases for ttbar
-  normFileName = "QCD_norm.txt"     # contains category normalization biases for QCD
+  #outDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/weighted'
+  #histoDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/Intermediate'
+  #combhistoDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/Intermediate'
+
+
+  #QCD
+  #inDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/flat_combined'
+  #histoDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/Intermediate'
+  #combhistoDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/Weighted'
+  #outDirName= '/scratch/vlambert/TMVA/QCD/QCD_weighted'
+
+  #QCD SL                                                                                                                             
+  inDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/flat_skimmed'
+  histoDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/IntermediateSL'
+  #combhistoDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/IntermediateSL'
+  combhistoDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/WeightSL'
+  #outDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/inter_SL'  
+  outDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/weightSL'  
+
+  #TTBar
+  #outDirName= '/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/weighted'
+  #histoDirName= '/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/WeightHistograms'
+  #combhistoDirName= '/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/WeightHistograms'
+  #inDirName= '/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/flat_Combined'
+
+  
+  #biasFileName = "BiasFiles/TTbias_category.txt"    # contains category biases for ttbar
+  biasFileName = "SLBiasFiles/TTbias_content.txt"
+  normFileName = "SLBiasFiles/QCDnorm_category.txt" 
+  #normFileName = "BiasFiles/QCDnorm_category.txt"     # contains category normalization biases for QCD
   
   weightHistName = "jets_lin"
   signalFlavours = ["C"]
@@ -215,14 +241,14 @@ def main():
   print NormDict
   
   for inFileName in os.listdir(inDirName):
-    if inFileName.endswith(".root"): # and inFileName.startswith("skimmed_20k_eachptetabin"):
+    if inFileName.endswith(".root") and inFileName.startswith("Combined"):
       # debug
-      # processNtuple(inFileName, inDirName, histoDirName, outDirName, etaPtBins, signalFlavours, biasDict, flavourBias)
+      processNtuple(inFileName, inDirName, histoDirName, combhistoDirName, outDirName, etaPtBins, biasDict, flavourBias, NormDict)
       # break
-      p.apply_async(processNtuple, args = (inFileName, inDirName, histoDirName, outDirName, etaPtBins, biasDict, flavourBias, NormDict))
+      #p.apply_async(processNtuple, args = (inFileName, inDirName, histoDirName, outDirName, etaPtBins, biasDict, flavourBias, NormDict))
 
-  p.close()
-  p.join()
+  #p.close()
+  #p.join()
   
   print "done"  
 

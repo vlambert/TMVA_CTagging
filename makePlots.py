@@ -15,18 +15,40 @@ flavourCutsDict = {}
 flavourCutsDict["C"] = "flavour == 4"
 flavourCutsDict["light"] = "flavour !=4 && flavour !=5"
 flavourCutsDict["non-C"] = "flavour !=4"
-flavourCutsDict["non-B"] = "flavour !=5"
+#flavourCutsDict["non-B"] = "flavour !=5"
 
 # also add vertexCategory
 categoryCutsDict = {}
-categoryCutsDict["NoVertex"] = "vertexCategory == 2"
-categoryCutsDict["PseudoVertex"] = "vertexCategory == 1"
-categoryCutsDict["RecoVertex"] = "vertexCategory == 0"
+categoryCutsDict["RecoVertexNoSoftLepton"] = "vertexLeptonCategory == 0"
+categoryCutsDict["PseudoVertexNoSoftLepton"] = "vertexLeptonCategory == 1"
+categoryCutsDict["NoVertexNoSoftLepton"] = "vertexLeptonCategory == 2"
+categoryCutsDict["RecoVertexSoftMuon"] = "vertexLeptonCategory == 3"
+categoryCutsDict["PseudoVertexSoftMuon"] = "vertexLeptonCategory == 4"
+categoryCutsDict["NoVertexSoftMuon"] = "vertexLeptonCategory == 5"
+categoryCutsDict["RecoVertexSoftElectron"] = "vertexLeptonCategory == 6"
+categoryCutsDict["PseudoVertexSoftElectron"] = "vertexLeptonCategory == 7"
+categoryCutsDict["NoVertexSoftElectron"] = "vertexLeptonCategory == 8"
+categoryCutsDict["RecoVertex"] = "(vertexLeptonCategory == 0 || vertexLeptonCategory == 3 || vertexLeptonCategory == 6)"
+categoryCutsDict["PseudoVertex"] = "(vertexLeptonCategory == 1 || vertexLeptonCategory == 4 || vertexLeptonCategory == 7)"
+categoryCutsDict["NoVertex"] = "(vertexLeptonCategory == 2 || vertexLeptonCategory == 5 || vertexLeptonCategory == 8)"
+categoryCutsDict["SLInfo"] = "vertexLeptonCategory > 2"
+categoryCutsDict["noSLInfo"] = "vertexLeptonCategory < 3"
 
 categories = []
-categories.append("NoVertex")
-categories.append("PseudoVertex")
+categories.append("RecoVertexNoSoftLepton")
+categories.append("PseudoVertexNoSoftLepton")
+categories.append("NoVertexNoSoftLepton")
+categories.append("RecoVertexSoftMuon")
+categories.append("PseudoVertexSoftMuon")
+categories.append("NoVertexSoftMuon")
+categories.append("RecoVertexSoftElectron")
+categories.append("PseudoVertexSoftElectron")
+categories.append("NoVertexSoftElectron")
 categories.append("RecoVertex")
+categories.append("PseudoVertex")
+categories.append("NoVertex")
+categories.append("SLInfo")
+categories.append("noSLInfo")
 categories.append("Inclusive")
 
 flavours = []
@@ -34,7 +56,7 @@ flavours = []
 flavours.append("C")
 flavours.append("light")
 flavours.append("non-C")
-flavours.append("non-B")
+#flavours.append("non-B")
 
 PtBins = []
 PtBins = []
@@ -274,8 +296,8 @@ def main():
   parallelProcesses = multiprocessing.cpu_count()
   
   # create Pool
-  p = multiprocessing.Pool(parallelProcesses)
-  print "Using %i parallel processes" %parallelProcesses
+  #p = multiprocessing.Pool(parallelProcesses)
+  #print "Using %i parallel processes" %parallelProcesses
     
   outDirName = './histos/'
   inDirName = "./"
@@ -288,12 +310,12 @@ def main():
       key = "%s_%s" %(category, flavour)
       print key
       fileList.append(inFileName.replace(".root", "_Histograms.root"))
-      # processNtuple(inFileName, inDirName, outDirName)
+      processNtuple(inFileName, inDirName, outDirName)
       # break
-      p.apply_async(processNtuple, args = (inFileName, inDirName, outDirName,))
+      #p.apply_async(processNtuple, args = (inFileName, inDirName, outDirName,))
 
-  p.close()
-  p.join()
+  #p.close()
+  #p.join()
 
 
   # loop over all output files of one category and flavour and hadd them
