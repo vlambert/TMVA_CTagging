@@ -1,7 +1,7 @@
 # TMVA_CTagging
 This directory includes the code for the development of the CMS TMVA ctagger_v1. Below are instructions for preparing and running the training.
 
-** Accessing from storage and filtering training sample:
+#### Accessing from storage and filtering training sample:
 The scripts for merging the original ntuples created by the VariableExtractor and skimming are located in the "Filters/" directory. One can merge the individual output ntuples from the storage element with merge\_from\_storage.sh . 
 
 Now the ntuples are flat trees in flavour and category. The tree files will look like CombinedSVNoVertex_DUSG.root with the tree name CombinedSVNoVertex.
