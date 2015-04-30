@@ -1,3 +1,12 @@
+'''
+
+Creates 2D pt/eta histograms per flavour/category ntuple to make
+jet pt and eta distributions flat. 
+
+* vertex category histograms also combined to make combined histograms
+  for each flavour
+
+'''
 import sys
 sys.argv.append( '-b-' )
 import os
@@ -15,7 +24,6 @@ def processNtuple(inFileName, inDirName, outDirName,category):
   # retrieve the ntuple of interest
   inFile = TFile( "%s/%s" %(inDirName, inFileName) )
   inTreeName = "tree"
-  #inTreeName = category
   mychain = gDirectory.Get( inTreeName )
   
   # output
@@ -24,11 +32,11 @@ def processNtuple(inFileName, inDirName, outDirName,category):
   outFile = TFile( outFileName, 'recreate' )
 
   histo = TH2D("jets", "jets", 50, -2.5, 2.5, 40, 4.17438727, 6.95654544315); # pt starting from 15 and until 1000
-  #mychain.Draw("log(jetPt+50):jetEta >> +jets", "", "Lego goff");
-  mychain.Draw("log(jetPt+50):jetEta >> +jets", "weight_norm*weight_category", "Lego goff");
-  histo_lin = TH2D("jets_lin", "jets_lin", 50, -2.5, 2.5, 25, 15, 600); # pt starting from 15 and until 1000  , default nbins was 40   500 works very well for C and DUSG   30, 15, 600
-  #mychain.Draw("jetPt:jetEta >> +jets_lin", "","Lego goff")
-  mychain.Draw("jetPt:jetEta >> +jets_lin", "weight_norm*weight_category", "Lego goff")
+  #mychain.Draw("log(jetPt+50):jetEta >> +jets", "", "Lego goff");                                    # category - specific
+  mychain.Draw("log(jetPt+50):jetEta >> +jets", "weight_norm*weight_category", "Lego goff");          # category - inclusive
+  histo_lin = TH2D("jets_lin", "jets_lin", 50, -2.5, 2.5, 40, 15, 1000); 
+  #mychain.Draw("jetPt:jetEta >> +jets_lin", "","Lego goff")                                          # category - specific
+  mychain.Draw("jetPt:jetEta >> +jets_lin", "weight_norm*weight_category", "Lego goff")               # category - inclusive
 
   outFile.cd()
   histo.Write()
@@ -39,9 +47,13 @@ def processNtuple(inFileName, inDirName, outDirName,category):
 def combineHist(inDirName,flavour):
   weightHistName = "jets_lin"
   print "Accessing file %s/CombinedSVRecoVertex_%s_EtaPtWeightHisto.root"%(inDirName,flavour)
+  
+  # Without soft lepton categories
   #RecoFileName = "%s/skimmed_20k_eachptetabin_CombinedSVRecoVertex_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
   #PseudoFileName = "%s/skimmed_20k_eachptetabin_CombinedSVPseudoVertex_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
   #NoVtxFileName = "%s/skimmed_20k_eachptetabin_CombinedSVNoVertex_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
+
+  # With soft lepton categories
   RecoNSLFileName = "%s/CombinedSVRecoVertexNoSoftLepton_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
   PseudoNSLFileName = "%s/CombinedSVPseudoVertexNoSoftLepton_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
   NoVtxNSLFileName = "%s/CombinedSVNoVertexNoSoftLepton_%s_EtaPtWeightHisto.root" %(inDirName, flavour) 
@@ -51,6 +63,10 @@ def combineHist(inDirName,flavour):
   RecoSEFileName = "%s/CombinedSVRecoVertexSoftElectron_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
   PseudoSEFileName = "%s/CombinedSVPseudoVertexSoftElectron_%s_EtaPtWeightHisto.root" %(inDirName, flavour)
   NoVtxSEFileName = "%s/CombinedSVNoVertexSoftElectron_%s_EtaPtWeightHisto.root" %(inDirName, flavour) 
+
+  #RecoFile = TFile( "%s" %( RecoFileName) )
+  #PseudoFile = TFile( "%s" %( PseudoFileName) )
+  #NoVtxFile = TFile( "%s" %( NoVtxFileName) )
 
   RecoNSLFile = TFile( "%s" %( RecoNSLFileName) )
   PseudoNSLFile = TFile( "%s" %( PseudoNSLFileName) )
@@ -62,6 +78,10 @@ def combineHist(inDirName,flavour):
   PseudoSMFile = TFile( "%s" %( PseudoSMFileName) )
   NoVtxSMFile = TFile( "%s" %( NoVtxSMFileName) )
   
+  #RecoHist = RecoFile.Get(weightHistName)
+  #PseudoHist = PseudoFile.Get(weightHistName)
+  #NoVtxHist = NoVtxFile.Get(weightHistName)
+
   RecoNSLHist = RecoNSLFile.Get(weightHistName)
   PseudoNSLHist = PseudoNSLFile.Get(weightHistName)
   NoVtxNSLHist = NoVtxNSLFile.Get(weightHistName)
@@ -72,7 +92,8 @@ def combineHist(inDirName,flavour):
   PseudoSEHist = PseudoSEFile.Get(weightHistName)
   NoVtxSEHist = NoVtxSEFile.Get(weightHistName)
 
-  print RecoNSLHist.ClassName()
+  #RecoHist.Add(PseudoHist)
+  #RecoHist.Add(NoVtxHist)
 
   RecoNSLHist.Add(PseudoNSLHist)
   RecoNSLHist.Add(NoVtxNSLHist)
@@ -104,13 +125,9 @@ def main():
   #outDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/IntermediateSL/'
   combDirName =  '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/WeightSL/'
   outDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/WeightSL/'
-  inDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/inter_SL/'
+  inDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/intermediate_SL/'
   #inDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/flat_skimmed/'
 
-  #TTBar
-  #combDirName = '/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/WeightHistograms/'
-  #outDirName = '/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/WeightHistograms/'
-  #inDirName = '/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/flat_Combined/'
   flavourCategoryDict = {}
 
   for inFileName in os.listdir(inDirName):

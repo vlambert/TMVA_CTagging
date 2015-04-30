@@ -1,3 +1,10 @@
+'''
+
+Creates ROC curves and Efficiency plots from evaluation ntuples 
+and stores them in new root file '/histos/AllHistograms.root'
+
+'''
+
 import sys
 sys.argv.append( '-b-' )
 import os
@@ -8,16 +15,13 @@ import multiprocessing
 import thread
 import subprocess
 
-
-
 flavourCutsDict = {}
-#flavourCutsDict["B"] = "flavour == 5"
+flavourCutsDict["B"] = "flavour == 5"
 flavourCutsDict["C"] = "flavour == 4"
 flavourCutsDict["light"] = "flavour !=4 && flavour !=5"
 flavourCutsDict["non-C"] = "flavour !=4"
-#flavourCutsDict["non-B"] = "flavour !=5"
+flavourCutsDict["non-B"] = "flavour !=5"
 
-# also add vertexCategory
 categoryCutsDict = {}
 categoryCutsDict["RecoVertexNoSoftLepton"] = "vertexLeptonCategory == 0"
 categoryCutsDict["PseudoVertexNoSoftLepton"] = "vertexLeptonCategory == 1"
@@ -52,11 +56,11 @@ categories.append("noSLInfo")
 categories.append("Inclusive")
 
 flavours = []
-#flavours.append("B")
+flavours.append("B")
 flavours.append("C")
 flavours.append("light")
 flavours.append("non-C")
-#flavours.append("non-B")
+flavours.append("non-B")
 
 PtBins = []
 PtBins = []
@@ -113,20 +117,24 @@ def processNtuple(inFileName, inDirName, outDirName,):
   nBins = 1000
   
   for flav in flavourCutsDict.keys():
+    # Draw Discriminants by flavour
     discriminantHisto = TH1D("histBDTG_%s"%flav, "BDTG output for %s;BDTG value"%flav, nBins, -1, 1)
     mychain.Draw("BDTG >> +histBDTG_%s"%flav, flavourCutsDict[flav], "")
     discriminantHisto.Write()
     discriminantHistos.append(discriminantHisto)
+    # Draw Discriminants in pT/eta bins
     for i in range(len(etaPtBins)):
       discriminantHisto = TH1D("histBDTG_%s_EtaPt%i"%(flav, i), "BDTG output for %s and %s;BDTG value"%(flav, etaPtBins[i]), nBins, -1, 1)
       mychain.Draw("BDTG >> +histBDTG_%s_EtaPt%i"%(flav, i), "(%s) && (%s)" %(flavourCutsDict[flav], etaPtBins[i].replace("and","&&")), "")
       discriminantHisto.Write()
       discriminantHistos.append(discriminantHisto)
+    # Draw Discriminants by Category
     for cat in categoryCutsDict.keys():
       discriminantHisto = TH1D("histBDTG_%s_%s"%(flav, cat), "BDTG output for %s and %s;BDTG value"%(flav, cat), nBins, -1, 1)
       mychain.Draw("BDTG >> +histBDTG_%s_%s"%(flav, cat), "%s && %s"%(flavourCutsDict[flav], categoryCutsDict[cat]), "")
       discriminantHisto.Write()
       discriminantHistos.append(discriminantHisto)
+    # Draw Discriminants by pT bin
     for j in range(len(PtBins)):
       discriminantHisto = TH1D("histBDTG_%s_Pt%i"%(flav, j), "BDTG output for %s and %s;BDTG value"%(flav, PtBins[j]), nBins, -1, 1)
       mychain.Draw("BDTG >> +histBDTG_%s_Pt%i"%(flav, j), "(%s) && (%s)" %(flavourCutsDict[flav], PtBins[j].replace("and","&&")), "")
@@ -138,7 +146,7 @@ def processNtuple(inFileName, inDirName, outDirName,):
 
 
 def makeROCCurves(outDirName):
-  
+  ''' Produce ROC curves and efficiency curves '''
   nBins = 100
   xBins = array("d")
   xBinsPlot = array("d")
@@ -181,8 +189,6 @@ def makeROCCurves(outDirName):
       for Xbin in range(0,histDictFlavCat[flav][cat].GetNbinsX()+1):
         YbinEff.append(histDictFlavCatEffs[flav][cat][Xbin])
         XbinEff.append(histDictFlavCat[flav][cat].GetBinCenter(Xbin))
-        #XbinEff.append(histDictFlavCat[flav][cat].Integral(Xbin,histDictFlavCat[flav][cat].GetNbinsX()+1))
-        #XbinEff.append(Xbin)
       EffCurve = TGraph(len(XbinEff),XbinEff,YbinEff)
       EffCurve.GetXaxis().SetTitle("%s Discriminant"%(flavours[flav]))
       EffCurve.GetYaxis().SetTitle("%s efficiency"%(flavours[flav]))
@@ -191,8 +197,63 @@ def makeROCCurves(outDirName):
       EffCurve.Draw("al")
       gPad.SetGridx(1)
       gPad.SetGridy(1)
-      #canvas1.SaveAs("%s/%s.png" %(outDirName, EffCurve.GetName()))
       EffCurve.Write()
+
+  # Create Efficiency Ratio (B/C and DUSG/C) v. Discriminator bin plots
+  canvas1 = TCanvas("c0","Eff",800,800)
+  XbinEffC = array("d")
+  YbinEffC = array("d")
+  XbinEffB = array("d")
+  YbinEffB = array("d")
+  XbinEffL = array("d")
+  YbinEffL = array("d")
+  for XbinC in range(0,histDictFlavCat[1][14].GetNbinsX()+1):
+    YbinEffC.append(histDictFlavCatEffs[1][14][XbinC])
+    XbinEffC.append(histDictFlavCat[1][14].GetBinCenter(XbinC))
+  for XbinB in range(0,histDictFlavCat[0][14].GetNbinsX()+1):
+    YbinEffB.append(histDictFlavCatEffs[0][14][XbinB])
+    XbinEffB.append(histDictFlavCat[0][14].GetBinCenter(XbinB))
+  for XbinL in range(0,histDictFlavCat[2][14].GetNbinsX()+1):
+    YbinEffL.append(histDictFlavCatEffs[2][14][XbinL])
+    XbinEffL.append(histDictFlavCat[2][14].GetBinCenter(XbinL))
+
+  YbinEffCB = array("d")
+  YbinEffCL = array("d")
+  for entry in range(len(XbinEffC)):
+    if YbinEffB[entry]!=0:
+      YbinEffCB.append(YbinEffC[entry]/YbinEffB[entry])
+    else:
+      if YbinEffC[entry]==0:
+        YbinEffCB.append(0.0)
+      else:
+        YbinEffCB.append(1000.0)
+    if YbinEffL[entry]!=0:
+      YbinEffCL.append(YbinEffC[entry]/YbinEffL[entry])
+    else:
+      if YbinEffC[entry]==0:
+        YbinEffCL.append(0.0)
+      else:
+        YbinEffCL.append(1000.0)
+  
+  EffCurveB = TGraph(len(XbinEffC),XbinEffC,YbinEffCB)
+  EffCurveB.GetXaxis().SetTitle("Discriminant")
+  EffCurveB.GetYaxis().SetTitle("C/B efficiency")
+  EffCurveB.SetTitle("C/B Efficiency")
+  EffCurveB.SetName("Efficiency_C_B_discrim")
+  EffCurveB.Draw("al")
+  gPad.SetGridx(1)
+  gPad.SetGridy(1)
+  EffCurveB.Write()
+
+  EffCurveL = TGraph(len(XbinEffC),XbinEffC,YbinEffCL)
+  EffCurveL.GetXaxis().SetTitle("Discriminant")
+  EffCurveL.GetYaxis().SetTitle("C/DUSG efficiency")
+  EffCurveL.SetTitle("C/DUSG Efficiency")
+  EffCurveL.SetName("Efficiency_C_light_discrim")
+  EffCurveL.Draw("al")
+  gPad.SetGridx(1)
+  gPad.SetGridy(1)
+  EffCurveL.Write()
 
   # Create ROC curves for vertex categories
   canvas2 = TCanvas("c2","ROC",800,800);
@@ -263,14 +324,6 @@ def makeROCCurves(outDirName):
             yBinsPlot.append(yBins[currentBin])
 
         
-        #print yBins
-        #print len(yBins)
-
-        #print "eff vs eff"
-        #for i in range (0, len(xBinsPlot)):
-        #  print "%f %f" %(xBinsPlot[i], yBinsPlot[i])
-
-        #rocCurve = TGraph(len(xBins),xBins,yBins)
         rocCurve = TGraph(len(xBinsPlot),xBinsPlot,yBinsPlot)
         rocCurve.GetXaxis().SetTitle("%s efficiency"%flavours[flav1])
         rocCurve.GetYaxis().SetTitle("%s efficiency"%flavours[flav2])

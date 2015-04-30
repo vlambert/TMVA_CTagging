@@ -1,16 +1,9 @@
-'''
-
-Train c-tagger on QCD with TMVA Boosted Decision Trees
-Output weights stored in weights directory with initial evaluation in TMVA_classification.root
-
-Run with 'python tmva_training.py > out.txt' and then run Comparisons/ranking.py 
-to obtain ranking of training variables for the BDT
-
-'''
 import ROOT
 import os
 import multiprocessing
 import array
+
+
 
 # LR training variables
 training_vars_float = [
@@ -26,36 +19,40 @@ training_vars_float = [
   "trackSip3dSig_1",
   "trackSip3dSig_2",
   "trackSip2dVal_0",
-  #"trackSip2dVal_1",
-  #"trackSip2dVal_2",
+  "trackSip2dVal_1",
+  "trackSip2dVal_2",
   "trackSip3dVal_0",
   "trackSip3dVal_1",
-  #"trackSip3dVal_2",
+  "trackSip3dVal_2",
   #"trackPtRel_0", "trackPtRel_1", "trackPtRel_2",
   #"trackPPar_0", "trackPPar_1", "trackPPar_2",
   #"trackEtaRel_0", "trackEtaRel_1", "trackEtaRel_2",
   #"trackDeltaR_0", "trackDeltaR_1", "trackDeltaR_2",
   #"trackPtRatio_0", "trackPtRatio_1", "trackPtRatio_2",
   #"trackPParRatio_0", "trackPParRatio_1", "trackPParRatio_2",
-  #"trackJetDist_0","trackJetDist_1","trackJetDist_2",
+  "trackJetDist_0","trackJetDist_1","trackJetDist_2",
   "trackDecayLenVal_0",
-  #"trackDecayLenVal_1",
-  #"trackDecayLenVal_2",
+  "trackDecayLenVal_1",
+  "trackDecayLenVal_2",
   "vertexMass_0",
-  #"vertexEnergyRatio_0",
+  "vertexEnergyRatio_0",
   #"trackSip2dSigAboveCharm_0",
   #"trackSip3dSigAboveCharm_0",
+  #"trackSip2dSigAboveHalfCharm_0",
+  #"trackSip3dSigAboveHalfCharm_0",
   "flightDistance2dSig_0",
   "flightDistance3dSig_0",
-  #"flightDistance2dVal_0",    ?
-  #"flightDistance3dVal_0",   ?
+  "flightDistance2dVal_0",    
+  "flightDistance3dVal_0",   
   #"trackSumJetEtRatio",
   "vertexJetDeltaR_0",
   #"trackSumJetDeltaR",
   #"trackSip2dValAboveCharm_0",
   #"trackSip3dValAboveCharm_0",
+  #"trackSip2dValAboveHalfCharm_0", 
+  #"trackSip3dValAboveHalfCharm_0",
   #"vertexFitProb_0",
-  #"chargedHadronEnergyFraction",
+  "chargedHadronEnergyFraction",
   #"neutralHadronEnergyFraction",
   #"photonEnergyFraction",
   #"electronEnergyFraction",
@@ -66,7 +63,7 @@ training_vars_float = [
 
 training_vars_int = [
   "vertexNTracks_0",
-  #"jetNSecondaryVertices",
+  "jetNSecondaryVertices",
   #"jetNTracks",
   #"chargedHadronMultiplicity",
   #"neutralHadronMultiplicity",
@@ -80,73 +77,76 @@ training_vars_int = [
 
 
 
-def train(bdtoptions):
+def train(bdtoptions, extravars):
   
   TMVA_tools = ROOT.TMVA.Tools.Instance()
 
   tree = ROOT.TChain('tree')
-  
+
   files = [
-    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexNoSoftLepton_B.root",
+    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexNoSoftLepton_B.root",
     "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexNoSoftLepton_C.root",
-    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexNoSoftLepton_DUSG.root",
-    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexSoftElectron_B.root",
+    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexNoSoftLepton_DUSG.root",
+    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexSoftElectron_B.root",
     "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexSoftElectron_C.root",
-    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexSoftElectron_DUSG.root",
-    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexSoftMuon_B.root",
+    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexSoftElectron_DUSG.root",
+    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexSoftMuon_B.root",
     "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexSoftMuon_C.root",
-    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexSoftMuon_DUSG.root",
-    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexNoSoftLepton_B.root",
+    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVNoVertexSoftMuon_DUSG.root",
+    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexNoSoftLepton_B.root",
     "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexNoSoftLepton_C.root",
-    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexNoSoftLepton_DUSG.root",
-    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexSoftElectron_B.root",
+    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexNoSoftLepton_DUSG.root",
+    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexSoftElectron_B.root",
     "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexSoftElectron_C.root",
-    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexSoftElectron_DUSG.root",
-    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexSoftMuon_B.root",
+    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexSoftElectron_DUSG.root",
+    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexSoftMuon_B.root",
     "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexSoftMuon_C.root",
-    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexSoftMuon_DUSG.root",
-    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexNoSoftLepton_B.root",
+    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVPseudoVertexSoftMuon_DUSG.root",
+    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexNoSoftLepton_B.root",
     "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexNoSoftLepton_C.root",
-    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexNoSoftLepton_DUSG.root",
-    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexSoftElectron_B.root",
+    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexNoSoftLepton_DUSG.root",
+    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexSoftElectron_B.root",
     "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexSoftElectron_C.root",
-    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexSoftElectron_DUSG.root",
-    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexSoftMuon_B.root",
+    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexSoftElectron_DUSG.root",
+    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexSoftMuon_B.root",
     "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexSoftMuon_C.root",
-    "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexSoftMuon_DUSG.root",
+    #"dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/vlambert/TMVA/CSVSLctag_73X/QCD/CombinedSVRecoVertexSoftMuon_DUSG.root",
     ]
   
   for f in files:
-    print 'Opening file %s' %f
-    tree.Add('%s' %f)
-    
-  signal_selection = 'flavour==4' # c
-  background_selection = 'flavour!=4 && flavour!=5' # not b or c
+      print 'Opening file %s' %f
+      tree.Add('%s' %f)
   
+  signal_selection = 'flavour==4' # c
+  background_selection = 'flavour==5' #  b
+
   num_pass = tree.GetEntries(signal_selection)
   num_fail = tree.GetEntries(background_selection)
-  
+
   print 'N events signal', num_pass
   print 'N events background', num_fail
   outFile = ROOT.TFile('TMVA_classification.root', 'RECREATE')
-  
+
   factory = ROOT.TMVA.Factory(
-    "TMVAClassification", 
-    outFile, 
-    "!V:!Silent:Color:DrawProgressBar:Transformations=I"
-    ) 
+                               "TMVAClassification", 
+                               outFile, 
+                               "!V:!Silent:Color:DrawProgressBar:Transformations=I"
+                             ) 
 
   for var in training_vars_float:
     factory.AddVariable(var, 'F') # add float variable
   for var in training_vars_int:
     factory.AddVariable(var, 'I') # add integer variable
-        
-  factory.SetWeightExpression('weight_etaPtInc * weight_category * weight_norm')  # for category-specific just use weight_etaPt
+  for var in extravars:
+    factory.AddVariable(var, 'F') # add variables from input
+
+  factory.SetWeightExpression('weight_etaPtInc*weight_norm*weight_category')
 
   factory.AddSignalTree(tree, 1.)
   factory.AddBackgroundTree(tree, 1.)
 
   # import pdb; pdb.set_trace()
+
   factory.PrepareTrainingAndTestTree( ROOT.TCut(signal_selection), ROOT.TCut(background_selection),
                                       "nTrain_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V" )
 
@@ -158,8 +158,11 @@ def train(bdtoptions):
                     )
 
   factory.TrainAllMethods()
+
   # factory.OptimizeAllMethods()
+
   factory.TestAllMethods()
+
   factory.EvaluateAllMethods()
 
   outFile.Close()
@@ -170,7 +173,6 @@ def train(bdtoptions):
 
 
 def trainMultiClass():
-  '''  Current not used '''
 
   classes = [
     ('flavour==5', 'B'),
@@ -224,17 +226,17 @@ def trainMultiClass():
 
 
 
-def read(inDirName, inFileName):
-  '''
-  Perform evaluation with output of jet pt, eta,
-  category, lepton category, flavour and BDT output
+def read(inDirName, inFileName, extravars):
+  ''' Perform evaluation with BDT weights on evaluation sample
+      Output is an ntuple with the flavour, category, leptoncategory, pt and eta of jet
+      
+      extravars is an array of optional additional variables that can be specified in batch submission
   '''
   print "Reading", inFileName
   
   TMVA_tools = ROOT.TMVA.Tools.Instance()
   tree = ROOT.TChain('tree')
   tree.Add('%s/%s' %(inDirName, inFileName))
-
   reader = ROOT.TMVA.Reader('TMVAClassification_BDTG')
 
   varDict = {}
@@ -242,6 +244,9 @@ def read(inDirName, inFileName):
     varDict[var] = array.array('f',[0])
     reader.AddVariable(var, varDict[var])
   for var in training_vars_int:
+    varDict[var] = array.array('f',[0])
+    reader.AddVariable(var, varDict[var])
+  for var in extravars:
     varDict[var] = array.array('f',[0])
     reader.AddVariable(var, varDict[var])
 
@@ -311,16 +316,16 @@ def read(inDirName, inFileName):
     fout.Close()
   print "done", inFileName
 
-def readParallel():
-  '''
-  Pass multiple files to evaluation
-  '''
+def readParallel(extravars):
+  '''  Read list of evaluation files in parallel '''
+
 
   print "start readParallel()"
   ROOT.gROOT.SetBatch(True)
   parallelProcesses = multiprocessing.cpu_count()
   
-  inDirName="/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/flat/"
+  #
+  inDirName="/scratch/vlambert/Phys14AOD/NewVariables/TTJets/flat_skimmed"
   files = [
     "CombinedSVNoVertexNoSoftLepton_B.root",
     "CombinedSVNoVertexNoSoftLepton_C.root",
@@ -357,7 +362,7 @@ def readParallel():
 
   for f in files:
     # debug
-     read(inDirName, f)
+     read(inDirName, f, extravars)
     # break
     # run jobs
     #p.apply_async(read, args = (inDirName, f,))
@@ -379,7 +384,10 @@ if __name__ == '__main__':
                    "nCuts=80",
                    "MaxDepth=2",
                    ]
-    train(bdtoptions)
-    # trainMultiClass()
-    readParallel()
+
+    extravars = [ ] 
+
+    train(bdtoptions, extravars)
+    #trainMultiClass()
+    readParallel(extravars)
 

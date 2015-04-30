@@ -1,3 +1,10 @@
+'''
+Create flat ntuples from vectorized ntuples 
+
+One output file per input file, plus additional files with
+softlepton categories  combined into vertex categories
+
+'''
 import sys
 import os
 sys.argv.append( '-b-' )
@@ -6,6 +13,8 @@ from array import array
 import time
 import math
 import multiprocessing
+import thread
+import subprocess
 
 
 def processNtuple(inFileName, outDirName, startEntry, endEntry, variables):
@@ -13,7 +22,8 @@ def processNtuple(inFileName, outDirName, startEntry, endEntry, variables):
   print "Starting to process events %i to %i" %(startEntry, endEntry)
   # retrieve the ntuple of interest
   inFile = TFile( inFileName )
-  inTreeName = inFileName.rsplit("/",1)[1].replace("skimmed_20k_eachptetabin_", "").split("_",1)[0]
+  #inTreeName = inFileName.rsplit("/",1)[1].replace("skimmed_", "").split("_",1)[0]                     # ttbar
+  inTreeName = inFileName.rsplit("/",1)[1].replace("skimmed_20k_eachptetabin_", "").split("_",1)[0]     # qcd
   mychain = gDirectory.Get( inTreeName )
   branchList = mychain.GetListOfBranches()
   
@@ -115,51 +125,101 @@ def processNtuple(inFileName, outDirName, startEntry, endEntry, variables):
 
 def main():
 
+
   ROOT.gROOT.SetBatch(True)
   parallelProcesses = multiprocessing.cpu_count()
   
-  outDirName = '/scratch/vlambert/TMVA/QCD_flat/'
+  outDirName = '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/flat/'
+  #outDirName = '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/flat_skimmed/'
   if not os.path.exists(outDirName):
     print "Creating new output directory: ", outDirName
     os.makedirs(outDirName)
   eventsPerJob = 250000
   
-  # QCD sample
-  inFileList = [
-    '/scratch/vlambert/TMVA/QCD_training/skimmed_20k_eachptetabin_CombinedSVV2NoVertex_B.root',
-    '/scratch/vlambert/TMVA/QCD_training/skimmed_20k_eachptetabin_CombinedSVV2NoVertex_C.root',
-    '/scratch/vlambert/TMVA/QCD_training/skimmed_20k_eachptetabin_CombinedSVV2NoVertex_DUSG.root',
-    '/scratch/vlambert/TMVA/QCD_training/skimmed_20k_eachptetabin_CombinedSVV2PseudoVertex_B.root',
-    '/scratch/vlambert/TMVA/QCD_training/skimmed_20k_eachptetabin_CombinedSVV2PseudoVertex_C.root',
-    '/scratch/vlambert/TMVA/QCD_training/skimmed_20k_eachptetabin_CombinedSVV2PseudoVertex_DUSG.root',
-    '/scratch/vlambert/TMVA/QCD_training/skimmed_20k_eachptetabin_CombinedSVV2RecoVertex_B.root',
-    '/scratch/vlambert/TMVA/QCD_training/skimmed_20k_eachptetabin_CombinedSVV2RecoVertex_C.root',
-    '/scratch/vlambert/TMVA/QCD_training/skimmed_20k_eachptetabin_CombinedSVV2RecoVertex_DUSG.root']
+  # QCD samples
+  #inFileList = [
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVNoVertexNoSoftLepton_B.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVNoVertexNoSoftLepton_C.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVNoVertexNoSoftLepton_DUSG.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVNoVertexSoftElectron_B.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVNoVertexSoftElectron_C.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVNoVertexSoftElectron_DUSG.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVNoVertexSoftMuon_B.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVNoVertexSoftMuon_C.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVNoVertexSoftMuon_DUSG.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVPseudoVertexNoSoftLepton_B.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVPseudoVertexNoSoftLepton_C.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVPseudoVertexNoSoftLepton_DUSG.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVPseudoVertexSoftElectron_B.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVPseudoVertexSoftElectron_C.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVPseudoVertexSoftElectron_DUSG.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVPseudoVertexSoftMuon_B.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVPseudoVertexSoftMuon_C.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVPseudoVertexSoftMuon_DUSG.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVRecoVertexNoSoftLepton_B.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVRecoVertexNoSoftLepton_C.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVRecoVertexNoSoftLepton_DUSG.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVRecoVertexSoftElectron_B.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVRecoVertexSoftElectron_C.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVRecoVertexSoftElectron_DUSG.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVRecoVertexSoftMuon_B.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVRecoVertexSoftMuon_C.root',
+    #'/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/QCD/skimmed/skimmed_20k_eachptetabin_CombinedSVRecoVertexSoftMuon_DUSG.root',
+    #]
 
-  
 
-  # 
+  # TTbar samples
   inFileList = [
-    #'/scratch/vlambert/TMVA/QCD_training/CombinedSVV2NoVertex_B.root',
-    #'/scratch/vlambert/TMVA/QCD_training/CombinedSVV2NoVertex_C.root',
-    #'/scratch/vlambert/TMVA/QCD_training/CombinedSVV2NoVertex_DUSG.root',
-    #'/scratch/vlambert/TMVA/QCD_training/CombinedSVV2PseudoVertex_B.root',
-    #'/scratch/vlambert/TMVA/QCD_training/CombinedSVV2PseudoVertex_C.root',
-    #'/scratch/vlambert/TMVA/QCD_training/CombinedSVV2PseudoVertex_DUSG.root',
-    #'/scratch/vlambert/TMVA/QCD_training/CombinedSVV2RecoVertex_B.root',
-    #'/scratch/vlambert/TMVA/QCD_training/CombinedSVV2RecoVertex_C.root']
-    #'/scratch/vlambert/TMVA/QCD_training/CombinedSVV2RecoVertex_DUSG.root']
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVNoVertexNoSoftLepton_B.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVNoVertexNoSoftLepton_C.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVNoVertexNoSoftLepton_DUSG.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVNoVertexSoftElectron_B.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVNoVertexSoftElectron_C.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVNoVertexSoftElectron_DUSG.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVNoVertexSoftMuon_B.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVNoVertexSoftMuon_C.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVNoVertexSoftMuon_DUSG.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVPseudoVertexNoSoftLepton_B.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVPseudoVertexNoSoftLepton_C.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVPseudoVertexNoSoftLepton_DUSG.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVPseudoVertexSoftElectron_B.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVPseudoVertexSoftElectron_C.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVPseudoVertexSoftElectron_DUSG.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVPseudoVertexSoftMuon_B.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVPseudoVertexSoftMuon_C.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVPseudoVertexSoftMuon_DUSG.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVRecoVertexNoSoftLepton_B.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVRecoVertexNoSoftLepton_C.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVRecoVertexNoSoftLepton_DUSG.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVRecoVertexSoftElectron_B.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVRecoVertexSoftElectron_C.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVRecoVertexSoftElectron_DUSG.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVRecoVertexSoftMuon_B.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVRecoVertexSoftMuon_C.root',
+    '/scratch/vlambert/Phys14AOD/NewVariables_LooseDistSig/TTJets/CombinedSVRecoVertexSoftMuon_DUSG.root',
+    ]
                
                 
 
 
                 
-  variables = [ # define as ["variable name", "variable type (f/i)", default value, in case of vector: max. length]
+  variables = [ 
+  # define as ["variable name", "variable type (f/i)", default value, in case of vector: max. length]
                 ["flavour", "i", -1],
                 ["jetPt", "f", -1],
                 ["trackJetPt", "f", -1],
                 ["jetEta", "f", -3],
                 ["vertexCategory", "i", -1],
+		["vertexLeptonCategory", "i", -1],
+                #["jetChargePt0p1", "f", -5],
+                #["jetChargePt0p3", "f", -5],
+                #["jetChargePt0p5", "f", -5],
+                #["jetChargePt0p6", "f", -5],
+                #["jetChargePt1", "f", -5],
+                #["VertexChargePt0p3", "f", -3],
+                #["VertexChargePt0p5", "f", -3],
+                #["VertexChargePt0p6", "f", -3],
+                #["VertexChargePt1", "f", -3],
           			["trackSip2dSig", "f", -100, 3], # centered around 0
           			["trackSip3dSig", "f", -100, 3], # centered around 0
           			["trackSip2dVal", "f", -1, 3], # centered around 0
@@ -177,6 +237,8 @@ def main():
           			["vertexEnergyRatio", "f", -10, 1], # positive values, larger than zero (can get large, but mostly < 2)
           			["trackSip2dSigAboveCharm", "f", -999, 1], # peaks at zero
           			["trackSip3dSigAboveCharm", "f", -999, 1], # peaks at zero
+                                ["trackSip2dSigAboveQuarterCharm", "f", -999, 1], # peaks at zero 
+                                ["trackSip3dSigAboveQuarterCharm", "f", -999, 1], # peaks at zero 
           			["flightDistance2dSig", "f", -1, 1], # exponentially falling from 0 up to ~200
           			["flightDistance3dSig", "f", -1, 1], # exponentially falling from 0 up to ~300
           			["flightDistance2dVal", "f", -0.1, 1], # exponentially falling from 0 up to ~2.5
@@ -188,7 +250,9 @@ def main():
           			["jetNTracks", "i", -0.1], # from 0 to 1
           			["trackSip2dValAboveCharm", "f", -1, 1], # default -1 in case not reached
           			["trackSip3dValAboveCharm", "f", -1, 1], # default -1 in case not reached
-          			["vertexFitProb", "f", -1, 1], # largely from 0 to ~10, but some outliers
+                                #["trackSip2dValAboveQuarterCharm", "f", -1, 1], # default -1 in case not reached  
+          	                #["trackSip3dValAboveQuarterCharm", "f", -1, 1], # default -1 in case not reached		
+                                ["vertexFitProb", "f", -1, 1], # largely from 0 to ~10, but some outliers
           			["chargedHadronEnergyFraction", "f", -0.1], # 0 to 1
           			["neutralHadronEnergyFraction", "f", -0.1], # 0 to 1
           			["photonEnergyFraction", "f", -0.1], # 0 to 1
@@ -204,15 +268,20 @@ def main():
           			["totalMultiplicity", "i", -1],
           			["massVertexEnergyFraction", "f", -0.1, 1], # distribution from 0 to ~5 with peak at 0
           			["vertexBoostOverSqrtJetPt", "f", -0.1, 1], # distribution from 0 to 1 with peak at 0
+				["leptonPtRel", "f", -1, 3],
+				["leptonSip3d", "f", -10000, 3], # has very long tails, so default at very low value
+				["leptonDeltaR", "f", -1, 3],
+				["leptonRatioRel", "f", -1, 3],
+				["leptonEtaRel", "f", -1, 3],
+				["leptonRatio", "f", -1, 3],
                ]
                 
   for inFileName in inFileList:
 
-    #inFileName = '/scratch/clange/CSV_AK5_JT5/QCD_training/CombinedSVV2RecoVertex_B.root'
-
     # retrieve the ntuple of interest to determine number of events
     inFile = TFile( inFileName )
-    inTreeName = inFileName.rsplit("/",1)[1].replace("skimmed_20k_eachptetabin_", "").split("_",1)[0]
+    #inTreeName = inFileName.rsplit("/",1)[1].replace("skimmed_", "").split("_",1)[0]                   # ttbar
+    inTreeName = inFileName.rsplit("/",1)[1].replace("skimmed_20k_eachptetabin_", "").split("_",1)[0]   # qcd
     print "Using tree with name: ", inTreeName 
     mychain = gDirectory.Get( inTreeName )
     branchList = mychain.GetListOfBranches()
@@ -240,10 +309,40 @@ def main():
     p.close()
     p.join()
   
+  
+  # loop over all output files of one category and flavour and hadd them : hadd -f skimmed_20k_eachptetabin_CombinedSVNoVertex_B.root skimmed_20k_eachptetabin_CombinedSVNoVertex*_B_*.root
+  finalOutFiles = ['NoVertexNoSoftLepton_B','NoVertexNoSoftLepton_C','NoVertexNoSoftLepton_DUSG','PseudoVertexNoSoftLepton_B','PseudoVertexNoSoftLepton_C','PseudoVertexNoSoftLepton_DUSG','RecoVertexNoSoftLepton_B','RecoVertexNoSoftLepton_C','RecoVertexNoSoftLepton_DUSG', 'NoVertexSoftElectron_B','NoVertexSoftElectron_C','NoVertexSoftElectron_DUSG','PseudoVertexSoftElectron_B','PseudoVertexSoftElectron_C','PseudoVertexSoftElectron_DUSG','RecoVertexSoftElectron_B','RecoVertexSoftElectron_C','RecoVertexSoftElectron_DUSG', 'NoVertexSoftMuon_B','NoVertexSoftMuon_C','NoVertexSoftMuon_DUSG','PseudoVertexSoftMuon_B','PseudoVertexSoftMuon_C','PseudoVertexSoftMuon_DUSG','RecoVertexSoftMuon_B','RecoVertexSoftMuon_C','RecoVertexSoftMuon_DUSG' ]
+  outDirName = os.path.join(os.path.abspath(sys.path[0]), outDirName) # absolute path to be safe
+  print "hadding key files"
+  for fileName in finalOutFiles:
+   #for QCD:
+   #haddCommand = "pwd && hadd -f CombinedSV%s.root skimmed_20k_eachptetabin_CombinedSV%s_%s_*.root" %(fileName,fileName.split("_",1)[0],fileName.split("_",1)[1])
+   haddCommand = "pwd && hadd -f CombinedSV%s.root CombinedSV%s_%s_*.root" %(fileName,fileName.split("_",1)[0],fileName.split("_",1)[1])
+   
+   #for TTbar
+   #haddCommand = "pwd && hadd -f CombinedSV%s.root skimmed_CombinedSV%s*_%s_*.root" %(fileName,fileName.split("_",1)[0],fileName.split("_",1)[1])
+   
+   print haddCommand
+   lock=thread.allocate_lock()
+   lock.acquire()
+   haddProcess=subprocess.Popen(haddCommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, cwd=outDirName)
+   haddProcess.wait()
+   lock.release()
+   errors = haddProcess.stderr.read()
+   if ( len(errors) > 0):
+     print "WARNING, there has been an error!"
+     print errors
+   print haddProcess.stdout.read()
+   # delete split files
+   # for fileName in fileList:
+   #   print "deleting %s/%s"%(outDirName, fileName)
+   #   os.remove("%s/%s"%(outDirName, fileName))
+  print "hadding is finished"
+  
+  
   print "done"  
 
 
 if __name__ == "__main__":
   main()
 
-#  LocalWords:  inFileList

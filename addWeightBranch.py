@@ -7,6 +7,9 @@
 #   o take from text file generated via bias script
 # - 2:1:3 B:C:light bias to account for dedicated C v. B and C vs. DUSG training
 #   o assign by hand
+#
+# * There will be two types of pT/eta weights, one category-specific and one category-inclusive
+#   for each flavour
 
 import sys
 sys.argv.append( '-b-' )
@@ -22,7 +25,6 @@ def getEtaPtBin(jetEta, jetPt, etaPtBins):
   
   binNumber = -1
   for i in range(len(etaPtBins)):
-    # print etaPtBins[i]
     if eval(etaPtBins[i]):
       binNumber = i
       break
@@ -30,19 +32,18 @@ def getEtaPtBin(jetEta, jetPt, etaPtBins):
 
 
 def getCategoryBias(category, flavour, etaPtBin, biasDict):
-  
+  # Get category bias values from input text file
   key = "%s_%s" %(category, flavour)
   return biasDict[key][etaPtBin]
 
 def getNormalization(category, flavour, etaPtBin, NormDict):
-  
+  # Get normalization bias values from input text file
   key = "%s_%s" %(category, flavour)
   return NormDict[key][etaPtBin] 
 
 
 def getEtaPtWeight(jetEta, jetPt, h2EtaPt):
-  
-  # print h2EtaPt.FindBin(jetEta, jetPt)
+  # Get pt/eta weight from 2D histogram
   binContent = h2EtaPt.GetBinContent(h2EtaPt.FindBin(jetEta, jetPt))
   if (binContent != 0):
     return 1./binContent
@@ -52,7 +53,6 @@ def getEtaPtWeight(jetEta, jetPt, h2EtaPt):
   
 
 def processNtuple(inFileName, inDirName, histoDirName, combhistoDirName, outDirName, etaPtBins, biasDict, flavourBias, NormDict):
-  
   print "Starting to process %s" %inFileName
   
   # histogram input
@@ -61,15 +61,14 @@ def processNtuple(inFileName, inDirName, histoDirName, combhistoDirName, outDirN
   flavour = inFileName.replace("skimmed_20k_eachptetabin_","").split("_",2)[1]
   flavour = flavour.replace(".root","")
   print "This sample is of category %s and flavour %s" %(category, flavour)
-  #if inFileName.startswith("skimmed_20k_eachptetabin_"):
   histoFileNameI = "%s/CombinedSVInclusive_%s_EtaPtWeightHisto.root" %(combhistoDirName, flavour)  #Category-inclusive pt/eta weights
   histoFileName  = "%s/CombinedSV%s_%s_EtaPtWeightHisto.root" %(histoDirName, category, flavour)
-  #histoFileName  = "%s/skimmed_20k_eachptetabin_CombinedSV%s_%s_EtaPtWeightHisto.root" %(histoDirName, category, flavour) #Category-specific pt/eta - for Category-specific training
   print "Getting histogram %s from %s" %(weightHistName, histoFileNameI)
   histoFileI = TFile.Open( histoFileNameI )
   histoFile  = TFile.Open( histoFileName )
   h2EtaPtI = histoFileI.Get(weightHistName)
   h2EtaPt  = histoFile.Get(weightHistName)
+
   # make copy of input ntuple to be safe and work with that
   print "copying %s/%s to %s/%s" %(inDirName, inFileName, outDirName, inFileName)
   shutil.copy2("%s/%s" %(inDirName, inFileName), "%s/%s"%(outDirName, inFileName))
@@ -93,6 +92,7 @@ def processNtuple(inFileName, inDirName, histoDirName, combhistoDirName, outDirN
   b_weight_norm = myTree.Branch( "weight_norm", weight_norm, 'weight_norm/F' )
   b_weight_flavour = myTree.Branch( "weight_flavour", weight_flavour, 'weight_flavour/F' )
   b_weight = myTree.Branch( "weight", weight, 'weight/F' )
+
   # connect branches needed for weight calculation
   jetPt = array( "f", [ 0. ] )
   jetEta = array( "f", [ 0. ] )
@@ -155,18 +155,10 @@ def main():
 
 
   #QCD
-  #inDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/flat_combined'
-  #histoDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/Intermediate'
-  #combhistoDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/Weighted'
-  #outDirName= '/scratch/vlambert/TMVA/QCD/QCD_weighted'
-
-  #QCD SL                                                                                                                             
-  inDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/flat_skimmed'
-  histoDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/IntermediateSL'
-  #combhistoDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/IntermediateSL'
-  combhistoDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/WeightSL'
-  #outDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/inter_SL'  
-  outDirName = '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/weightSL'  
+  inDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/flat_combined'
+  histoDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/Intermediate'
+  combhistoDirName= '/scratch/vlambert/Phys14AOD/QCD_13TeV_defaultIVF/Histograms/Weighted'
+  outDirName= '/scratch/vlambert/TMVA/QCD/QCD_weighted'
 
   #TTBar
   #outDirName= '/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/weighted'
@@ -175,10 +167,10 @@ def main():
   #inDirName= '/scratch/vlambert/Phys14AOD/TTbar_13TeV_defaultIVF/flat_Combined'
 
   
-  #biasFileName = "BiasFiles/TTbias_category.txt"    # contains category biases for ttbar
-  biasFileName = "SLBiasFiles/TTbias_content.txt"
-  normFileName = "SLBiasFiles/QCDnorm_category.txt" 
-  #normFileName = "BiasFiles/QCDnorm_category.txt"     # contains category normalization biases for QCD
+  biasFileName = "BiasFiles/TTbias_category.txt"    # contains category biases for ttbar
+  #biasFileName = "SLBiasFiles/TTbias_content.txt"
+  #normFileName = "SLBiasFiles/QCDnorm_category.txt" 
+  normFileName = "BiasFiles/QCDnorm_category.txt"     # contains category normalization biases for QCD
   
   weightHistName = "jets_lin"
   signalFlavours = ["C"]
