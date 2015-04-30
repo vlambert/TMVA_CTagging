@@ -51,6 +51,6 @@ such that you can obtain the rankings of the training variables using `Compariso
 
 The output of the initial evaluation on QCD is recorded in a root file, *TMVA_classification.root* . This contains various training information including the variable distributions and correlations, which can be viewed using the TMVAGui.
 
-The output of the evaluation on ttbar is stored in ntuples such as *trainPlusBDTG\_CombinedSVNoVertexSoftMuon_B.root*. One can produce ROC curves and efficiency plots using `makePlots.py ` . Other scripts to compare curves from various trainings are found in the **"Comparisons/"** directory.
+The output of the evaluation on ttbar is stored in ntuples such as *trainPlusBDTG\_CombinedSVRecoVertex_B.root*. One can produce ROC curves and efficiency plots using `makePlots.py ` . Other scripts to compare curves from various trainings are found in the **"Comparisons/"** directory.
 
 
