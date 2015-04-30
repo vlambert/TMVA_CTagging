@@ -6,17 +6,17 @@ The scripts for merging the original ntuples created by the VariableExtractor an
 
 Now the ntuples are flat trees in flavour and category. The tree files will look like CombinedSVNoVertex_DUSG.root with the tree name CombinedSVNoVertex.
 
-Below are the subsequent steps for preparing the training samples for the TMVA:
+#### Below are the subsequent steps for preparing the training samples for the TMVA:
 1) The training QCD samples most likely need to be skimmed to not cause a memory allocation error for the TMVA training. One can first skim the samples, selecting 20,000 events in each pt/eta bin for each flavour/vertex root file, to ensure that there are enough statistics in each pt/eta bin for the training. This is performed by Filter.C .
 
 2) The evaluation ttbar trees can be skimmed as well to make the evaluation process faster. The script Skimmer.C will randomly select 10% of the events from each of the flavour/category files. The output will be one combined root file for each flavour/category such as CombinedSVNoVertex_DUSG.root.
 *Remember not to use the same skimming process for the evaluation as done for the training since one wants to keep the physical vertex category distribution for the process in the evaluation.
 
-** Flat ntuples
+##### Flat ntuples
 3) Now make the vectorized trees really flat and set variables that are not defined for a given vertex category to a default value. For this, run your ntuples through createNewTree.py which will produce sets of new flat ntuples split in event range such as CombinedSVNoVertex\_DUSG\_0\_249999.root with the shared tree name “tree”.
 ** This is done for both the QCD training samples and the ttbar samples
 
-** Event Weights
+##### Event Weights
 4) Produce the category normalization weights for the training sample with normalizationQCD.C (BiasFiles or SLBiasFiles for soft-lepton category) and save the output to a text such as QCD\_normweights.txt. These will be added as a weight branch “weight_norm” which flattens the vertex category distribution for the training sample.
 
 5) Create the vertex category weights from ttbar for the training samples with biasTTbar.C (BiasFiles or SLBiasFiles for soft-lepton categories) and save the output to a text file such as BiasDump.txt.
@@ -40,7 +40,7 @@ Below are the subsequent steps for preparing the training samples for the TMVA:
   - combhistoDirName should point to the weighted histograms made in step 8
   - histoDirName should point to the initial unweighted histograms made in step 6
 
-** Training
+#### Training
 The training samples are now ready for the training process with tmva_training.py. This will perform the training on 50% of the QCD sample, an initial evaluation on the other 50% of the QCD sample and the evaluation on the specifed evaluation samples.Make sure to create a directory called “weights” to save the output class and xml files from the training. If you run the training interactively use,
 python tmva_training.py > out.txt 
 such that you can obtain the rankings of the training variables using Comparisons/rankings.py . 
