@@ -11,12 +11,12 @@ Now the ntuples are flat trees in flavour and category. The tree files will look
 
 2) The evaluation ttbar trees can be skimmed as well to make the evaluation process faster. The script `Skimmer.C` will randomly select 10% of the events from each of the flavour/category files. The output will be one combined root file for each flavour/category such as *CombinedSVNoVertex_DUSG.root*.
 
-*Remember not to use the same skimming process for the evaluation as done for the training since one wants to keep the physical vertex category distribution for the process in the evaluation.
++ Remember not to use the same skimming process for the evaluation as done for the training since one wants to keep the physical vertex category distribution for the process in the evaluation.
 
 ##### Flat ntuples
 3) Now make the vectorized trees really flat and set variables that are not defined for a given vertex category to a default value. For this, run your ntuples through `createNewTree.py` which will produce sets of new flat ntuples split in event range such as *CombinedSVNoVertex\_DUSG\_0\_249999.root* with the shared tree name “tree”.
 
-** This is done for both the QCD training samples and the ttbar samples
++ This is done for both the QCD training samples and the ttbar samples
 
 ##### Event Weights
 4) Produce the category normalization weights for the training sample with `normalizationQCD.C` (BiasFiles or SLBiasFiles for soft-lepton category) and save the output to a text such as *QCD\_normweights.txt*. These will be added as a weight branch “weight_norm” which flattens the vertex category distribution for the training sample.
@@ -38,7 +38,7 @@ Now the ntuples are flat trees in flavour and category. The tree files will look
 -weight_flavour : the ratio of the flavour prevalences in the evaluation process
 -weight : (weight\_etaPtInc) x (weight\_norm x weight\_category) x (weight\_flavour) – this can be used for combined trainings
 
-* Note that you will need two histogram directories :
++  Note that you will need two histogram directories :
   - combhistoDirName should point to the weighted histograms made in step 8
   - histoDirName should point to the initial unweighted histograms made in step 6
 
