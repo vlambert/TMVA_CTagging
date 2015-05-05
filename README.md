@@ -19,9 +19,9 @@ Now the ntuples are flat trees in flavour and category. The tree files will look
 + This is done for both the QCD training samples and the ttbar samples
 
 ##### Event Weights
-4) Produce the category normalization weights for the training sample with `normalizationQCD.C` (BiasFiles or SLBiasFiles for soft-lepton category) and save the output to a text such as *QCD\_normweights.txt*. These will be added as a weight branch “weight_norm” which flattens the vertex category distribution for the training sample.
+4) Produce the category normalization weights for the training sample with `normalizationQCD.C` (BiasFiles or SLBiasFiles for soft-lepton category) and save the output to a text such as *QCDnorm\_category.txt*. These will be added as a weight branch “weight_norm” which flattens the vertex category distribution for the training sample.
 
-5) Create the vertex category weights from ttbar for the training samples with `biasTTbar.C` (BiasFiles or SLBiasFiles for soft-lepton categories) and save the output to a text file such as *BiasDump.txt*.
+5) Create the vertex category weights from ttbar for the training samples with `biasTTbar.C` (BiasFiles or SLBiasFiles for soft-lepton categories) and save the output to a text file such as *TTbias_category.txt*.
 
 6) Create initial 2D Pt/Eta Histogram for the flat and skimmed QCD ntuples with `createEtaPtWeightHists.py` (make sure “weight\_norm*weight_category” are set for the weight in Draw() for the histograms). There will be 12 histograms created, 9 for the individual flavour/category files and 3 combined histograms, one for each flavour. Make sure you used the lines marked 
 *'# category-specific'*
