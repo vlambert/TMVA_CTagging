@@ -6,8 +6,8 @@ The scripts for merging the original ntuples created by the VariableExtractor an
 
 Now the ntuples are flat trees in flavour and category. The tree files will look like *CombinedSVNoVertex_DUSG.root* with the tree name *CombinedSVNoVertex*.
 
-#### Below are the subsequent steps for preparing the training samples for the TMVA:
-1) The training QCD samples most likely need to be skimmed to not cause a memory allocation error for the TMVA training. One can first skim the samples, selecting 20,000 events in each pt/eta bin for each flavour/vertex root file, to ensure that there are enough statistics in each pt/eta bin for the training. This is performed by `Filter.C` .
+#### Below are the subsequent steps for preparing the training samples:
+1) The training QCD samples most likely need to be skimmed to not cause a memory allocation error for the TMVA training. One can first skim the samples, selecting 20,000 events in each pt/eta bin for each (flavour/vertex category) root file, to ensure that there are enough statistics in each pt/eta bin for the training. This is performed by `Filter.C` or `TrainingFilter.py` .
 
 2) The evaluation ttbar trees can be skimmed as well to make the evaluation process faster. The script `Skimmer.C` will randomly select 10% of the events from each of the flavour/category files. The output will be one combined root file for each flavour/category such as *CombinedSVNoVertex_DUSG.root*.
 
@@ -19,7 +19,7 @@ Now the ntuples are flat trees in flavour and category. The tree files will look
 + This is done for both the QCD training samples and the ttbar samples
 
 ##### Event Weights
-4) Produce the category normalization weights for the training sample with `normalizationQCD.C` (BiasFiles or SLBiasFiles for soft-lepton category) and save the output to a text such as *QCDnorm\_category.txt*. These will be added as a weight branch “weight_norm” which flattens the vertex category distribution for the training sample.
+4) Produce the category normalization weights for the training sample with `normalizationQCD.C` (BiasFiles or SLBiasFiles for soft-lepton category) and save the output to a text file such as *QCDnorm\_category.txt*. These will be added as a weight branch “weight_norm” which flattens the vertex category distribution for the training sample.
 
 5) Create the vertex category weights from ttbar for the training samples with `biasTTbar.C` (BiasFiles or SLBiasFiles for soft-lepton categories) and save the output to a text file such as *TTbias_category.txt*.
 
