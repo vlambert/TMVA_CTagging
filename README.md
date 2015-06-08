@@ -14,7 +14,7 @@ Now the ntuples are flat trees in flavour and category. The tree files will look
 + Remember not to use the same skimming process for the evaluation as done for the training since one wants to keep the physical vertex category distribution for the process in the evaluation.
 
 ##### Flat ntuples
-3) Now make the vectorized trees really flat and set variables that are not defined for a given vertex category to a default value. For this, run your ntuples through `createNewTree.py` which will produce sets of new flat ntuples split in event range such as *CombinedSVNoVertex\_DUSG\_0\_249999.root* with the shared tree name “tree”. These should also be combined at the end of the script to produce one file *CombinedSVNoVertex\_DUSG.root* with hadd.
+3) Now make the vectorized trees really flat and set variables that are not defined for a given vertex category to a default value. For this, run your ntuples through `createNewTree.py` which will produce sets of new flat ntuples split in event range such as *CombinedSVNoVertex\_DUSG\_0\_249999.root* with the shared tree name “tree”. These should also be combined at the end of the script to produce one file *CombinedSVNoVertex\_DUSG.root* with hadd for each original file.
 
 + This is done for both the QCD training samples and the ttbar samples
 
@@ -31,6 +31,7 @@ Now the ntuples are flat trees in flavour and category. The tree files will look
 8) Create weighted 2D Pt/Eta Histograms for the weighted ntuples with `createEtaPtWeightHists.py` again but exchange the lines marked *'#category -specific'* with *'#category - inclusive'* and use the weighted ntuples from step 7.
 
 9) Make the final weighted ntuples making sure that the new Pt/Eta histogram files are pointed to in `addWeightBranch.py`. There should be six new branches created:
+
 -weight_etaPt : the Pt/Eta weight, specific for a flavour/category file (for category dedicated training)
 -weight_etaPtInc: the Pt/Eta weight, inclusive for the flavour
 -weight_category: the category weight from the evaluation sample
