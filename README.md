@@ -32,12 +32,12 @@ Now the ntuples are flat trees in flavour and category. The tree files will look
 
 9) Make the final weighted ntuples making sure that the new Pt/Eta histogram files are pointed to in `addWeightBranch.py`. There should be six new branches created:
 
--weight_etaPt : the Pt/Eta weight, specific for a flavour/category file (for category dedicated training)
--weight_etaPtInc: the Pt/Eta weight, inclusive for the flavour
--weight_category: the category weight from the evaluation sample
--weight_norm : the normalization weight from the training sample
--weight_flavour : the ratio of the flavour prevalences in the evaluation process
--weight : (weight\_etaPtInc) x (weight\_norm x weight\_category) x (weight\_flavour) – this can be used for combined trainings
+- weight_etaPt : the Pt/Eta weight, specific for a flavour/category file (for category dedicated training)
+- weight_etaPtInc: the Pt/Eta weight, inclusive for the flavour
+- weight_category: the category weight from the evaluation sample
+- weight_norm : the normalization weight from the training sample
+- weight_flavour : the ratio of the flavour prevalences in the evaluation process
+- weight : (weight\_etaPtInc) x (weight\_norm x weight\_category) x (weight\_flavour) – this can be used for combined trainings
 
 +  Note that you will need two histogram directories :
   - combhistoDirName should point to the weighted histograms made in step 8
