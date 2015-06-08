@@ -14,7 +14,7 @@ Now the ntuples are flat trees in flavour and category. The tree files will look
 + Remember not to use the same skimming process for the evaluation as done for the training since one wants to keep the physical vertex category distribution for the process in the evaluation.
 
 ##### Flat ntuples
-3) Now make the vectorized trees really flat and set variables that are not defined for a given vertex category to a default value. For this, run your ntuples through `createNewTree.py` which will produce sets of new flat ntuples split in event range such as *CombinedSVNoVertex\_DUSG\_0\_249999.root* with the shared tree name “tree”.
+3) Now make the vectorized trees really flat and set variables that are not defined for a given vertex category to a default value. For this, run your ntuples through `createNewTree.py` which will produce sets of new flat ntuples split in event range such as *CombinedSVNoVertex\_DUSG\_0\_249999.root* with the shared tree name “tree”. These should also be combined at the end of the script to produce one file *CombinedSVNoVertex\_DUSG.root* with hadd.
 
 + This is done for both the QCD training samples and the ttbar samples
 
@@ -23,7 +23,7 @@ Now the ntuples are flat trees in flavour and category. The tree files will look
 
 5) Create the vertex category weights from ttbar for the training samples with `biasTTbar.C` (BiasFiles or SLBiasFiles for soft-lepton categories) and save the output to a text file such as *TTbias_category.txt*.
 
-6) Create initial 2D Pt/Eta Histogram for the flat and skimmed QCD ntuples with `createEtaPtWeightHists.py` (make sure “weight\_norm*weight_category” are set for the weight in Draw() for the histograms). There will be 12 histograms created, 9 for the individual flavour/category files and 3 combined histograms, one for each flavour. Make sure you used the lines marked 
+6) Create initial 2D Pt/Eta Histogram for the flat and skimmed QCD ntuples with `createEtaPtWeightHists.py` (make sure “weight\_norm * weight_category” are set for the weight in Draw() for the histograms). There will be 12 histograms created, 9 for the individual flavour/category files and 3 combined histograms, one for each flavour. Make sure you used the lines marked 
 *'# category-specific'*
 
 7) Add the normalization and category weight branches to the flat ntuples with `addWeightBranch.py`. The combination of these weights will remove the training sample vertex category information and match it with that of the evaluation sample. You will also need to specify the histogram directory from step 6 to add the pt/eta weights. 
